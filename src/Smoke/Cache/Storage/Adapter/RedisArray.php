@@ -204,13 +204,10 @@ class RedisArray extends AbstractAdapter implements
 
         try {
             if ($ttl) {
-                if ($this->getRedisResourceManager()->getMajorVersion($this->resourceId) < 2) {
-                    throw new Exception\UnsupportedMethodCallException("To use ttl you need version >= 2.0.0");
-                }
-                $success = $redis->setex($this->namespacePrefix . $normalizedKey, $ttl, $value);
-            } else {
-                $success = $redis->set($this->namespacePrefix . $normalizedKey, $value);
+                return $redis->setex($this->namespacePrefix . $normalizedKey, $ttl, $value);
             }
+
+            return $redis->set($this->namespacePrefix . $normalizedKey, $value);
         } catch (RedisResourceException $e) {
             throw new Exception\RuntimeException($redis->getLastError(), $e->getCode(), $e);
         }
@@ -389,9 +386,6 @@ class RedisArray extends AbstractAdapter implements
             $options      = $this->getOptions();
             $resourceMgr  = $options->getResourceManager();
             $serializer   = $resourceMgr->getLibOption($options->getResourceId(), Redis::OPT_SERIALIZER);
-            $redisVersion = $resourceMgr->getMajorVersion($options->getResourceId());
-            $minTtl       = version_compare($redisVersion, '2', '<') ? 0 : 1;
-            $supportedMetadata = $redisVersion >= 2 ? ['ttl'] : [];
 
             $this->capabilities = new Capabilities(
                 $this,
@@ -416,8 +410,8 @@ class RedisArray extends AbstractAdapter implements
                         'object'   => false,
                         'resource' => false,
                     ],
-                    'supportedMetadata'  => $supportedMetadata,
-                    'minTtl'             => $minTtl,
+                    'supportedMetadata'  => ['ttl'],
+                    'minTtl'             => 1,
                     'maxTtl'             => 0,
                     'staticTtl'          => true,
                     'ttlPrecision'       => 1,

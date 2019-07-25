@@ -65,21 +65,9 @@ class RedisArrayResourceManager
                 $this->connect($resource);
             }
 
-            if (! $resource['version']) {
-                $info = $resource['resource']->info();
-
-                // NOTE: We take the first server info as basis for capabilities, as there seems to be no better
-                // option for RedisArray
-                $info = current($info);
-                $resource['version'] = $info['redis_version'];
-            }
-
             return $resource['resource'];
         }
 
-        //$redis = new RedisResource();
-
-        //$resource['resource'] = $redis;
         $this->connect($resource);
 
         /* @var $redis RedisResource */
@@ -89,13 +77,6 @@ class RedisArrayResourceManager
             $redis->setOption($k, $v);
         }
 
-        $info = $redis->info();
-
-        // NOTE: We take the first server info as basis for capabilities, as there seems to be no better
-        // option for RedisArray
-        $info = current($info);
-
-        $resource['version'] = $info['redis_version'];
         $this->resources[$id]['resource'] = $redis;
         return $redis;
     }
@@ -164,7 +145,6 @@ class RedisArrayResourceManager
             'database'      => 0,
             'resource'      => null,
             'initialized'   => false,
-            'version'       => 0,
         );
 
         $defaults = array_merge_recursive($defaults, self::$defaultRedisArrayOptions);
@@ -539,36 +519,6 @@ class RedisArrayResourceManager
 
         $resource = & $this->resources[$id];
         return $resource['database'];
-    }
-
-    /**
-     * Get redis server version
-     *
-     * @deprecated 2.2.2 Use getMajorVersion instead
-     *
-     * @param string $id
-     * @return int
-     * @throws Exception\RuntimeException
-     */
-    public function getMayorVersion($id)
-    {
-        return $this->getMajorVersion($id);
-    }
-
-    /**
-     * Get redis server version
-     *
-     * @param string $id
-     * @return int
-     * @throws Exception\RuntimeException
-     */
-    public function getMajorVersion($id)
-    {
-        // check resource id and initialize the resource
-        $this->getResource($id);
-
-        $resource = & $this->resources[$id];
-        return (int) $resource['version'];
     }
 
     public function setLazyConnect($id, $lazyConnect)
